@@ -1,0 +1,37 @@
+name: Cel - Batch 1
+
+on:
+  schedule:
+    - cron: '0 2 * * *'   # Runs daily at 2:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    name: Run cel_group${{ matrix.group }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        group: [1, 2, 3, 4, 5]
+      fail-fast: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Run scraper for group ${{ matrix.group }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+        run: python -m cel_group${{ matrix.group }}
